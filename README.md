@@ -7,3 +7,6 @@ First it will look through your inventory and see if you have any batteries that
 
 As Charlie would say:
 > That's about it. See ya!
+
+## Installation
+Just install with MO2. Priority does not matter.
