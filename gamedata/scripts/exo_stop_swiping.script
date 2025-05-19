@@ -1,3 +1,28 @@
+cache = item_exo_device.cache
+
+OldInstallPsu = item_exo_device.install_psu
+item_exo_device.install_psu = function (suit, data, psu)
+    local overWriteSupply = nil
+
+    if data.supply ~= nil then
+        item_exo_device.remove_psu(suit)
+        overWriteSupply = 100
+    end
+    local sec_p = psu:section()
+    if cache[sec_p] then
+        data.supply = dup_table(cache[sec_p])
+
+        if overWriteSupply then data.power = overWriteSupply end
+
+        item_exo_device.print_dbg("Installing PSU %s with drain %s, capacity %s", data.supply.name, data.supply.drain, data.supply.max)
+        item_exo_device.set_data(suit:id(), data)
+        -- adjust_weight(suit)
+        alife_release(psu)
+        -- play some sound?
+    	xr_sound.set_sound_play(AC_ID,"inv_aam_open")
+    end
+end
+
 OldRemovePsu = item_exo_device.remove_psu
 item_exo_device.remove_psu = function (obj)
     local id = obj:id()
