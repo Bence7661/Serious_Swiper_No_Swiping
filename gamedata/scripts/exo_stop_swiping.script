@@ -2,17 +2,27 @@ cache = item_exo_device.cache
 
 OldInstallPsu = item_exo_device.install_psu
 item_exo_device.install_psu = function (suit, data, psu)
-    local overWriteSupply = nil
+    local isSwap = false
+    local oldPower = 0
 
     if data.supply ~= nil then
-        item_exo_device.remove_psu(suit)
-        overWriteSupply = 100
+        NewRemovePsu(suit, false)
+        isSwap = true
+        oldPower = data.power
     end
+
     local sec_p = psu:section()
     if cache[sec_p] then
         data.supply = dup_table(cache[sec_p])
 
-        if overWriteSupply then data.power = overWriteSupply end
+        if isSwap then
+            local powerToProcess = oldPower - data.supply.max
+
+            if powerToProcess > 0 then
+                RefundBatteries(powerToProcess)
+                data.power = data.supply.max
+            end
+        end
 
         item_exo_device.print_dbg("Installing PSU %s with drain %s, capacity %s", data.supply.name, data.supply.drain, data.supply.max)
         item_exo_device.set_data(suit:id(), data)
@@ -25,48 +35,7 @@ end
 
 OldRemovePsu = item_exo_device.remove_psu
 item_exo_device.remove_psu = function (obj)
-    local id = obj:id()
-    local data = item_exo_device.get_data(id)
-
-    local sparePower = 0
-    local batteriesToCreate = 0
-
-    if not data or is_empty(data) then return end
-    if not data.supply then return end
-    if data.power > 100 then
-        local powerToProcess = data.power - 100
-        -- batteriesToCreate = math.ceil(powerToProcess / 100)
-        batteriesToCreate = math.floor(powerToProcess / 100)
-        sparePower = (powerToProcess % 100) / 100
-
-        local batteryToDegrade = nil
-        for i=1, batteriesToCreate do
-            alife_create_item("batteries_exo", db.actor)
-        end
-
-        if sparePower > 0 then
-            db.actor:iterate_inventory(function (_, obj)
-                if obj:section() == "batteries_exo" then
-                    local cond = obj:condition()
-                    if cond < 1 and sparePower > 0 then
-                        obj:set_condition(clamp(cond + sparePower, 0.01, 1))
-
-                        sparePower = sparePower - (1 - cond)
-                    end
-                end
-            end, db.actor)
-
-            if sparePower >= 0.01 then
-                batteryToDegrade = alife_create_item("batteries_exo", db.actor)
-                CreateTimeEvent("exo_stop_swiping", "degradeBattery", 0.2, DegradeBattery, batteryToDegrade.id, sparePower)
-            end
-        end
-        data.power = 100
-    end
-
-    alife_create_item(data.supply.name, db.actor)
-    data.supply = nil
-    item_exo_device.set_data(id, data)
+    NewRemovePsu(obj, true)
 end
 
 function DegradeBattery(id, sparePower)
@@ -77,4 +46,51 @@ function DegradeBattery(id, sparePower)
     end
 
     return true
+end
+
+function NewRemovePsu(obj, refundBatteries)
+    local id = obj:id()
+    local data = item_exo_device.get_data(id)
+
+    if not data or is_empty(data) then return end
+    if not data.supply then return end
+    if refundBatteries and data.power > 0 then
+        RefundBatteries(data.power)
+        data.power = 0
+    end
+    
+    alife_create_item(data.supply.name, db.actor)
+    data.supply = nil
+    item_exo_device.set_data(id, data)
+end
+
+function RefundBatteries(powerToProcess)
+    local sparePower = 0
+    local batteriesToCreate = 0
+
+    batteriesToCreate = math.floor(powerToProcess / 100)
+    sparePower = (powerToProcess % 100) / 100
+
+    local batteryToDegrade = nil
+    for i=1, batteriesToCreate do
+        alife_create_item("batteries_exo", db.actor)
+    end
+
+    if sparePower > 0 then
+        db.actor:iterate_inventory(function (_, obj)
+            if obj:section() == "batteries_exo" then
+                local cond = obj:condition()
+                if cond < 1 and sparePower > 0 then
+                    obj:set_condition(clamp(cond + sparePower, 0.01, 1))
+
+                    sparePower = sparePower - (1 - cond)
+                end
+            end
+        end, db.actor)
+
+        if sparePower >= 0.01 then
+            batteryToDegrade = alife_create_item("batteries_exo", db.actor)
+            CreateTimeEvent("exo_stop_swiping", "degradeBattery", 0.2, DegradeBattery, batteryToDegrade.id, sparePower)
+        end
+    end
 end
