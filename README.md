@@ -1,4 +1,5 @@
-# Swiper No Swiping
+# Exo QoL Patches
+Previously known as "Swiper No Swiping"
 When you remove the PSU from an armor you the batteries in it are "refunded" if the power level is above 100 (because 100 stays on the suit).
 
 ## Features
