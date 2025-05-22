@@ -15,6 +15,10 @@
 		<text>Day</text>
 	</string>
 
+	<string id="st_sws_days">
+		<text>Days</text>
+	</string>
+
 	<string id="st_sws_hour">
 		<text>Hour</text>
 	</string>
