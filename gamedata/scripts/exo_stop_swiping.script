@@ -38,6 +38,12 @@ item_exo_device.remove_psu = function (obj)
     NewRemovePsu(obj, true)
 end
 
+OldIsExo = item_exo_device.is_exo
+item_exo_device.is_exo = function (obj)
+    if not IsOutfit(obj) then return false end
+    return OldIsExo(obj)
+end
+
 function DegradeBattery(id, sparePower)
     local batteryToDegrade = get_object_by_id(id)
 
