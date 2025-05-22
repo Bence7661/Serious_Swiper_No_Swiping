@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<string_table>
+	<string id="st_sws_desc_title">
+		<text>Suit battery consumption</text>
+	</string>
+	<string id="st_sws_normal_use">
+		<text>Normal use</text>
+	</string>
+
+	<string id="st_sws_heavy_use">
+		<text>Heavy use</text>
+	</string>
+
+	<string id="st_sws_day">
+		<text>Day</text>
+	</string>
+
+	<string id="st_sws_hour">
+		<text>Hour</text>
+	</string>
+
+	<string id="st_sws_hours">
+		<text>Hours</text>
+	</string>
+
+	<string id="st_sws_minute">
+		<text>Minute</text>
+	</string>
+
+	<string id="st_sws_minutes">
+		<text>Minutes</text>
+	</string>
+</string_table>

@@ -1,0 +1,107 @@
+local forceRefreshThisId
+local gray  = utils_xml.get_color("ui_gray_1")
+local white  = utils_xml.get_color("white")
+local gc = game.translate_string
+
+cache = item_exo_device.cache
+
+OriginalBuildDescHeader = ui_item.build_desc_header
+function ui_item.build_desc_header(obj, sec, str)
+    local oStr = OriginalBuildDescHeader(obj, sec, str)
+    local nStr = ""
+
+    if obj and item_exo_device.is_exo(obj) then
+        forceRefreshThisId = obj:id()
+
+        local id = obj:id()
+        local data = item_exo_device.get_data(id)
+        if not data then data = item_exo_device.init_data(id) end
+        local base_drain = cache[sec] or 0.01
+        base_drain = modify_drain_sprint(base_drain, data)
+        local heavyD, heavyH, heavyM = CalculateBatteryLife(data.power, base_drain)
+
+        base_drain = modify_drain_normal(base_drain, data)
+        local normalD, normalH, normalM = CalculateBatteryLife(data.power, base_drain)
+
+        local normalUseStr = game.translate_string("st_sws_normal_use") .. ": " .. gray .. TimeToString(normalD, normalH, normalM) .. "\\n"
+        local heavyUseStr = game.translate_string("st_sws_heavy_use") .. ": " .. gray .. TimeToString(heavyD, heavyH, heavyM)
+        nStr = white .. game.translate_string("st_sws_desc_title") .. ": \\n" .. "  • " .. normalUseStr .. white .. "  • " .. heavyUseStr .. "\\n"
+        oStr = oStr .. "\\n \\n" .. nStr .. gray
+    end
+
+    return oStr
+end
+
+OldItemDescription = ui_item.item_description
+ui_item.item_description = function (obj, str)
+    local id = obj:id()
+	local sec = obj:section()
+
+	if (ui_item.last_d_id == id) and ui_item.last_d_id ~= forceRefreshThisId then
+		return ui_item.last_desc_id or ""
+	end
+
+	str = ui_item.build_desc_header(obj,sec,str) -- Header
+	str = ui_item.build_desc_footer(obj,sec,str) -- Footer
+
+	ui_item.last_d_id = id
+	ui_item.last_desc_id = str
+
+	return str or ""
+end
+
+function CalculateBatteryLife(power, drain)
+    power = tonumber(power) or 0
+    local drain_per_tick = tonumber(drain) or 0.01
+
+    if power <= 0 or drain_per_tick <= 0 then
+        return 0, 0, 0
+    end
+
+    local total_real_seconds = (power / drain_per_tick) * (item_exo_device.interval / 1000)
+    local anomaly_seconds = (total_real_seconds / 14400) * 86400
+
+    local days = math.floor(anomaly_seconds / 86400)
+    local remaining = anomaly_seconds % 86400
+    local hours = math.floor(remaining / 3600)
+    local minutes = math.floor((remaining % 3600) / 60)
+
+    return days, hours, minutes
+end
+
+function modify_drain_sprint(base_drain, data)
+    local drain_mult = exo_mcm.get_config("drain") or 1
+    if data.supply then base_drain = base_drain * data.supply.drain end
+    local fast_mult = exo_mcm.get_config("sprint_drain")
+    return base_drain * fast_mult * drain_mult
+end
+
+function modify_drain_normal(base_drain, data)
+    local drain_mult = exo_mcm.get_config("drain") or 1
+    if data.supply then base_drain = base_drain * data.supply.drain end
+    return base_drain * drain_mult
+end
+
+function TimeToString(days, hours, minutes)
+    local str = ""
+
+    if days > 0 then
+        local dayTxt = " " .. gc("st_sws_day")
+        if days > 1 then dayTxt = " " .. gc("st_sws_days") end
+        str = days .. dayTxt.. " "
+    end
+
+    local hourTxt = " " .. gc("st_sws_hours")
+    if hours == 1 then
+        hourTxt = " " .. gc("st_sws_hour")
+    end
+    str = str .. hours .. hourTxt .. " "
+        
+    local minuteTxt = " " .. gc("st_sws_minutes")
+    if minutes == 1 then
+        minuteTxt = " " .. gc("st_sws_minute")
+    end
+    str = str .. minutes .. minuteTxt
+
+    return str
+end

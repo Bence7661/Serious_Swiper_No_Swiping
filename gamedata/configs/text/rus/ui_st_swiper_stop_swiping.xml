@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<string_table>
+	<string id="st_sws_desc_title">
+		<text>Расход батареи костюма</text>
+	</string>
+	<string id="st_sws_normal_use">
+		<text>Обычное использование</text>
+	</string>
+
+	<string id="st_sws_heavy_use">
+		<text>Интенсивное использование</text>
+	</string>
+
+	<string id="st_sws_day">
+		<text>День</text>
+	</string>
+
+	<string id="st_sws_hour">
+		<text>Час</text>
+	</string>
+
+	<string id="st_sws_hours">
+		<text>Часов</text>
+	</string>
+
+	<string id="st_sws_minute">
+		<text>Минута</text>
+	</string>
+
+	<string id="st_sws_minutes">
+		<text>Минут</text>
+	</string>
+</string_table>
